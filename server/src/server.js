@@ -7,6 +7,8 @@ import morgan from 'morgan';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
   User,
@@ -18,6 +20,9 @@ import {
 
 import { auth, roles } from './middleware.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 
 app.use(helmet());
@@ -26,6 +31,12 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '1mb' }));
 app.use(morgan('dev'));
+const frontendPath = path.resolve(__dirname, '../../client/dist');
+app.use(express.static(frontendPath));
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) return next();
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
 
 app.use(
   '/api/auth',
